@@ -2,12 +2,21 @@ const express = require('express')
 
 const bcrypt = require('bcrypt');
 const _ = require('underscore');
+const {verificaToken,verificaAdminRole} = require('../middlewares/autenticacion');
 
 const app = express()
 
 const Usuario = require('../models/usuario');
 
-app.get('/usuario', function (req, res) {
+
+app.get('/usuario', verificaToken ,(req, res) => {
+
+    res.json({
+        usuario:req.usuario,
+        nombre:usuario.req.nombre,
+        email:usuario.req.email
+    })
+
 
     let desde = Number(req.query.desde) || 0;
     let cantidad = Number(req.query.cantidad) || 5;
@@ -19,7 +28,7 @@ app.get('/usuario', function (req, res) {
         if(err){
             return res.status(400).json({
                 ok:false,
-                err:err
+                err
             })
         }
         Usuario.count({'estado':true},(err,conteo) => {
@@ -33,7 +42,7 @@ app.get('/usuario', function (req, res) {
     });
 });
   
-  app.post('/usuario', function (req, res) {
+  app.post('/usuario',[verificaToken,verificaAdminRole], (req, res) => {
       let body = req.body;
       let usuario = new Usuario({
           nombre:body.nombre,
@@ -57,7 +66,7 @@ app.get('/usuario', function (req, res) {
 
   });
   
-  app.put('/usuario/:id', function (req, res) {
+  app.put('/usuario/:id',[verificaToken,verificaAdminRole], (req, res) => {
       let id = req.params.id;
       // mediante libreria underscore selecciono solo los que me interesa poder updatear en la base
       let body = _.pick(req.body,['nombre','email','role','estado','google']);
@@ -87,7 +96,7 @@ app.get('/usuario', function (req, res) {
 
   });
   
-  app.delete('/usuario/:id', function (req, res) {
+  app.delete('/usuario/:id',[verificaToken,verificaAdminRole], (req, res) => {
       let id = req.params.id;
       let cambiaEstado = {
           estado:false
