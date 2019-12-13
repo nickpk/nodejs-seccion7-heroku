@@ -6,7 +6,7 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'dev';
 
 
 // vencimiento tokens
-process.env.caducidad = 60*60*24*30;
+process.env.caducidad = '48h';
 process.env.SEED = process.env.SEED || '123'; // process.env.SEED = 123456789
 
 // base de datos
