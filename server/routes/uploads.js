@@ -3,6 +3,10 @@ const fileUpload = require('express-fileupload');
 const app = express();
 
 let Usuario = require('../models/usuario');
+let Producto = require('../models/producto');
+
+const fs = require('fs');
+const path = require('path');
 
 
 app.use(fileUpload());
@@ -48,6 +52,7 @@ app.put('/upload/:type/:id',function(req,res) {
 
     let nombreArchivo = `${id}-${new Date().getMilliseconds()}.${extencion}`
 
+    console.log(type);
     archivo.mv(`uploads/${type}/${nombreArchivo}`,(err)=>{
         if(err){
             return res.status(500).json({
@@ -55,27 +60,44 @@ app.put('/upload/:type/:id',function(req,res) {
                 err
             })
         }
-        imagenUsuario(id,res,nombreArchivo)
+        switch (type) {
+            case 'usuarios':
+                imagenUsuario(id,res,nombreArchivo)
+                break;
+            case 'productos':
+                imagenProducto(id,res,nombreArchivo)
+                break;
+        }
     })
 })
 
 function imagenUsuario(id,res,nombreArchivo){
     Usuario.findById(id ,(err,usuarioDB) => {
         if(err){
+            borraArchivo(nombreArchivo,'usuarios');
             return res.status(500).json({
                 ok:false,
                 err
             })
         }
         if(!usuarioDB){
+            borraArchivo(nombreArchivo,'usuarios');
             return res.status(400).json({
                 ok:false,
                 message:'Usuario no existe'
             })
         }
+
+        borraArchivo(usuarioDB.img,'usuarios');
         usuarioDB.img = nombreArchivo;
         usuarioDB.save( (err,usuarioGuardado)=> {
-            res.json({
+            if(err){
+                return res.status(500).json({
+                    ok:false,
+                    err
+                })
+            }
+            return res.json({
                 ok:true,
                 usuario:usuarioGuardado,
                 img:nombreArchivo
@@ -84,9 +106,47 @@ function imagenUsuario(id,res,nombreArchivo){
     })
 }
 
-function imagenProducto(){
+function imagenProducto(id,res,nombreArchivo){
+    Producto.findById(id,(err,productoDB)=> {
+        if(err){
+            borraArchivo(nombreArchivo,'productos');
+            return res.status(500).json({
+                ok:false,
+                err
+            })
+        }
+        if(!productoDB){
+            borraArchivo(nombreArchivo,'productos');
+            return res.status(400).json({
+                ok:false,
+                message:'No existe el producto'
+            })
+        }
+        borraArchivo(productoDB.img,'productos');
+        productoDB.img = nombreArchivo;
+        productoDB.save((err,productoGuardado) => {
+            if(err){
+                return res.status(500).json({
+                    ok:false,
+                    err
+                })
+            }
+            return res.json({
+                ok:true,
+                producto:productoGuardado,
+                img:nombreArchivo
+            })
+        })
 
+    })
 }
 
+function borraArchivo(nombreImagen,tipo){
+    let pathImagen = path.resolve(__dirname,`../../uploads/${tipo}/${nombreImagen}`);
+    if(fs.existsSync(pathImagen)){ // regresa un true si existe y un false si no existe el path
+        fs.unlinkSync(pathImagen);
+        console.log('Se elimino imagen anterior');
+    }
+}
 
 module.exports = app;
