@@ -11,13 +11,6 @@ const Usuario = require('../models/usuario');
 
 app.get('/usuario', verificaToken ,(req, res) => {
 
-    res.json({
-        usuario:req.usuario,
-        nombre:usuario.req.nombre,
-        email:usuario.req.email
-    })
-
-
     let desde = Number(req.query.desde) || 0;
     let cantidad = Number(req.query.cantidad) || 5;
 
